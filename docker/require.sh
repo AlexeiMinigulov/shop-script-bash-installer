@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /app/common.sh
+source /app/docker/common.sh
 
 
 
@@ -17,6 +17,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
 apt-get install -y software-properties-common
+apt-get install -y wget
 
 
 
@@ -68,8 +69,6 @@ echo "===============Install ElasticSearch=================="
 
 apt-get install apt-transport-https
 apt-get install elasticsearch -y
-sed -i 's/-Xms1g/-Xms64m/' /etc/elasticsearch/jvm.options
-sed -i 's/-Xmx1g/-Xmx64m/' /etc/elasticsearch/jvm.options
 sed -i 's/network.host: 192.168.0.1/network.host: 192.168.0.1/' /etc/elasticsearch/elasticsearch.yml
 systemctl daemon-reload
 systemctl enable elasticsearch.service
@@ -114,6 +113,14 @@ sed -i 's/user www-data/user vagrant/g' /etc/nginx/nginx.conf
 
 
 
+
+echo "=============Enabling site configuration============="
+
+ln -s /app/vagrant/nginx/app.conf /etc/nginx/sites-enabled/app.conf
+
+
+
+
 echo "==========Initailize databases for MySQL============="
 
 mysql -uroot <<< "CREATE DATABASE shopscript"
@@ -127,4 +134,18 @@ curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin
 
 
 
+echo "===========Enabling supervisor processes============="
+
+ln -s /app/vagrant/supervisor/queue.conf /etc/supervisor/conf.d/queue.conf
+ln -s /app/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+
+
 echo "======================DONE!=========================="
+
+
+
+echo "----------------SET UP Application...----------------"
+bash /app/docker/once-as-docker.sh
+
+echo "--------------------END------------------------------"
